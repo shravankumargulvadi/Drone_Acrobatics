@@ -51,11 +51,11 @@ static float K_M     = 4.4732910188601685e-08f; // Nm / "PWM"
 
 // K_LQR
 static float K[4][12] = {
-  {0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.4f, 0.0f, 0.0f, 0.0f},
-  {0.0f, -5.8e-4f, 0.0f -1.7e-3f, 0.0f, 0.0f, 0.0f, -7e-4f, 0.0f, -5e-4f, 0.0f, 0.0f},
-  {5.8e-4f, 0.0f, 0.0f, 0.0f, -1.7e-3f, 0.0f, 7e-4f, 0.0f, 0.0f, 0.0f, -5e-4f, 0.0f},
-  {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1e-2f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -7.1e-3}};
-
+  {0.0f, 0.0f, -0.6f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -0.5f, 0.0f,  0.0f, 0.0f},
+  {0.0f, -8e-4f, 0.0f, -3.6e-3f, 0.0f, 0.0f, 0.0f, -1.1e-3f, 0.0f, -9e-4f, 0.0f, 0.0f},
+  {8e-4f, 0.0f, 0.0f, 0.0f, -3.6e-3f, 0.0f, 1.1e-3f, 0.0f, 0.0f, 0.0f, -9e-4f, 0.0f},
+  {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.4e-2f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -1.0e-2f}};
+  
 static float state_vec[12];
 static float setpt_vec[12];
 static float state_error_vec[12];
@@ -125,8 +125,8 @@ void controllerMellinger(control_t *control, setpoint_t *setpoint,
   state_vec[10] = -radians(sensors->gyro.y);
   state_vec[11] = radians(sensors->gyro.z);
 
-  setpt_vec[0]  = 0.0f;//-setpoint->position.x;
-  setpt_vec[1]  = 0.0f;//setpoint->position.y;
+  setpt_vec[0]  = 0.0f;//setpoint->position.x;
+  setpt_vec[1]  = 0.0f;//-setpoint->position.y;
   setpt_vec[2]  = setpoint->position.z;
 
   setpt_vec[3]  = 0.0f;//radians(setpoint->attitude.roll);
@@ -154,7 +154,11 @@ void controllerMellinger(control_t *control, setpoint_t *setpoint,
     }
   }
 
-  input_vec[0] += setpoint->thrust + MASS * GRAVITY;  // gravity compensation in Newton
+  input_vec[0] += MASS * GRAVITY;  // gravity compensation in Newton
+
+  if (setpoint->mode.z == modeDisable) {
+    input_vec[0] = setpoint->thrust;
+  }
 
   // input_vec[0] = input_vec[0];
   // input_vec[1] = input_vec[1]*7.6859f*2.0f;
@@ -173,6 +177,14 @@ void controllerMellinger(control_t *control, setpoint_t *setpoint,
   control->pitch  = 2.0f * pwm_vec[2];
   control->yaw    = -1.0f  * pwm_vec[3];  
 
+  if (control->thrust == 0)
+  {
+    control->thrust = 0;
+    control->roll = 0;
+    control->pitch = 0;
+    control->yaw = 0;
+  }
+  
   controllerMellingerReset();
   
 }
