@@ -1,2 +1,2 @@
 # Drone_Acrobatics
-Make crazyflie do multiple flips
+Make crazyflie do successful flips
